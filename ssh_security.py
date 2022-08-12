@@ -1,6 +1,3 @@
-"""TODO: sepearate code into python files and MVC model
-"""
-
 import os
 import sqlite3
 from flask import (Flask, render_template, request, jsonify, redirect, url_for)
