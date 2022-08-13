@@ -1,4 +1,4 @@
-from .models import Logs, Users, Config
+from .models import *
 from sqlmodel import Session, SQLModel, select
 
 
@@ -10,33 +10,36 @@ class SetupDatabase:
 
 class Create:
     
-    def create(data: Logs | Users):
+    def create(data: LogsSchema):
         with Session(Config.engine) as session:
+            data = Logs.from_orm(data)
             session.add(data)
             session.commit()
             session.refresh(data)
+            return data
+
+    def create_user(data: UsersSchema):
+        with Session(Config.engine) as session:
+            data = Users.from_orm(data)
+            session.add(data)
+            session.commit()
+            session.refresh(data)
+            return data
 
 
 class Read:
 
-    def read(data: Logs | Users):
+    def read_users():
         with Session(Config.engine) as session:
             statement = select(Users)
-            results = session.exec(statement)
-            return list(results)
-
-    def read_existence(data: Logs | Users):
-          with Session(Config.engine) as session:
-            statement = select(Users)
-            results = session.exec(statement)
-            if data in results: return True
-            else: return False       
-
-    def read_by_email(data: Logs | Users):
+            results = session.exec(statement).all()
+            return results
+    
+    def read_logs():
         with Session(Config.engine) as session:
-            statement = select(Users).where(Users.email == data.email)
-            results = session.exec(statement)
-            return list(results)
+            statement = select(Logs)
+            results = session.exec(statement).all()
+            return results
 
 
 class Update:
