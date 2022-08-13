@@ -10,10 +10,11 @@ from typing import Optional
 
 APP = Flask("__main__")
 
+
 @dataclass
 class SchemaData:
-    month :str
-    day:str
+    month: str
+    day: str
     time: str
     server: str
     auth_type: str
@@ -22,7 +23,7 @@ class SchemaData:
     port: int
     pubkey: Optional[str] = "NULL" 
 
-    def add_to_database(self) -> tuple:
+    def add_to_database(self) -> tuple:     
         return (self.month, self.day, self.time, self.server, self.auth_type, self.user, self.ip_address, self.port, self.pubkey)
     
     def date_object(self) -> tuple:
@@ -158,7 +159,7 @@ class TestingDatabase:
 
 
 class LogHandlerTesting:
-        
+    
     def __init__(self) -> None:
         self.log_path = "/var/log/auth.log"
         return None
@@ -193,7 +194,6 @@ class LogHandlerTesting:
                     month=log[0], day=log[2],time=log[3], server=log[4], auth_type=" ".join(log[6:8]),
                     user=log[9], ip_address=log[11], port=log[13], pubkey=" ".join(log[15:18]))
         return add_to_data_sort.add_to_database()
-
 
     def _testing_logs(self, log:str) -> tuple: 
         """Reads the log file and and saves the ssh logs based on content of the log"""

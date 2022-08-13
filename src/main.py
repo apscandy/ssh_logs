@@ -1,7 +1,12 @@
-from libraries import *
+import uvicorn
+from fastapi import FastAPI
+from database.operations import SetupDatabase
 
 app = FastAPI()
 
+@app.on_event("startup")
+def on_startup():
+    SetupDatabase.create_db_and_tables()
 
 @app.get("/")
 def root():
