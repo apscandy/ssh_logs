@@ -1,6 +1,7 @@
-from .models import *
+from .models.logs import *
+from .models.user import *
+from .settings import Config
 from sqlmodel import Session, SQLModel, select
-
 
 class SetupDatabase:
 
@@ -10,7 +11,7 @@ class SetupDatabase:
 
 class Create:
     
-    def create(data: LogsSchema):
+    def create_logs(data: LogsSchema):
         with Session(Config.engine) as session:
             data = Logs.from_orm(data)
             session.add(data)
