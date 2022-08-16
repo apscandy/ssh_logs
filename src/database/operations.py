@@ -48,4 +48,11 @@ class Update:
 
 
 class Delete:
-    pass
+
+    def delete_user(user_id:int):
+        with Session(Config.engine) as session:
+            statement = select(Users).where(Users.id == user_id)
+            results = session.exec(statement)
+            user = results.one()
+            session.delete(user)
+            session.commit()

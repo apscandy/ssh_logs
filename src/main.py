@@ -30,8 +30,11 @@ def create_logs(data: LogsSchema, _: str = Depends(login)):
 
 @app.post("/users/", response_model=UsersSchema)
 def create_user(data: UsersSchema, _: str = Depends(login)):
-    data.password = create_hash(data.password)
+    data.password = Hashing.create_hash(data.password)
     return Create.create_user(data=data)
+
+def run_server(host:str, port:int, debug:bool, reload:bool):
+    uvicorn.run("main:app", host=host, port=port, debug=debug, reload=reload)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

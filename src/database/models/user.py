@@ -7,6 +7,10 @@ class CurrentUsers(SQLModel):
     password: str
     is_admin: bool
 
+class ListingDB(SQLModel):
+    id: int
+    email :str
+
 
 class UsersSchema(SQLModel):
     first_name: str
