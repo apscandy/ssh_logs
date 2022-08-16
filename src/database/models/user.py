@@ -7,6 +7,7 @@ class CurrentUsers(SQLModel):
     password: str
     is_admin: bool
 
+
 class UsersSchema(SQLModel):
     first_name: str
     last_name: str
