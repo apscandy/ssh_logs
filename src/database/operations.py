@@ -35,7 +35,7 @@ class Read:
             statement = select(Users)
             results = session.exec(statement).all()
             return results
-    
+
     def read_logs():
         with Session(Config.engine) as session:
             statement = select(Logs)
