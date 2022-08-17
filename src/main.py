@@ -1,8 +1,9 @@
 import uvicorn
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Form, Response
 from database.operations import SetupDatabase, Read, Create
 from database.models.logs import *
 from database.models.user import *
+import base64
 from views.auth import *
 from typing import List
 
@@ -12,9 +13,9 @@ app = FastAPI()
 def on_startup():
     SetupDatabase.create_db_and_tables()
 
-@app.get("/")
-def read_logs(cred: str = Depends(login)):
-    return {"Hello" : cred}
+@app.get("/", response_model=CurrentUsers)
+def current_user(cred: str = Depends(login)):
+    return cred
 
 @app.get("/logs/", response_model=List[LogsSchema])
 def read_logs(_: str = Depends(login)):
@@ -28,8 +29,8 @@ def read_users(_: str = Depends(login)):
 def create_logs(data: LogsSchema, _: str = Depends(login)):
     return Create.create_logs(data=data)
 
-@app.post("/users/", response_model=UsersSchema)
-def create_user(data: UsersSchema, _: str = Depends(login)):
+@app.post("/users/", response_model=CreateUsers)
+def create_user(data: CreateUsers, _: str = Depends(login)):
     data.password = Hashing.create_hash(data.password)
     return Create.create_user(data=data)
 

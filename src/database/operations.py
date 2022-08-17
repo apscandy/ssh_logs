@@ -1,7 +1,12 @@
 from .models.logs import *
 from .models.user import *
 from .settings import Config
-from sqlmodel import Session, SQLModel, select
+from sqlmodel import Session, SQLModel, select, delete
+from sqlmodel.sql.expression import Select, SelectOfScalar
+
+SelectOfScalar.inherit_cache = True  # type: ignore
+Select.inherit_cache = True  # type: ignore
+
 
 class SetupDatabase:
 
@@ -35,6 +40,12 @@ class Read:
             statement = select(Users)
             results = session.exec(statement).all()
             return results
+    
+    def read_users_login(email: str):
+        with Session(Config.engine) as session:
+            statement = select(Users).where(Users.email == email)
+            results = session.exec(statement).first()
+            return results
 
     def read_logs():
         with Session(Config.engine) as session:
@@ -51,8 +62,12 @@ class Delete:
 
     def delete_user(user_id:int):
         with Session(Config.engine) as session:
-            statement = select(Users).where(Users.id == user_id)
-            results = session.exec(statement)
-            user = results.one()
-            session.delete(user)
+            statement = delete(Users).where(Users.id == user_id)
+            session.exec(statement)
+            session.commit()
+
+    def delete_all_users():
+        with Session(Config.engine) as session:
+            statement = delete(Users)
+            session.exec(statement)
             session.commit()

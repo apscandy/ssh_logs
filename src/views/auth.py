@@ -1,33 +1,42 @@
-# import secrets
+import secrets
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from passlib.context import CryptContext
+from database.models.user import CurrentUsers
+
+from database.operations import Read
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBasic()
 
-
 class Hashing:
     
     def verify_hash(plain_password: str, hashed_password: str) -> bool:
         return pwd_context.verify(plain_password, hashed_password)
-
+    
+    def verify_user(username_request: str, username_database: str) -> bool:
+        return secrets.compare_digest(username_request, username_database)
+    
     def create_hash(password: str) -> str:
         return pwd_context.hash(password)
 
-def login(credentials: HTTPBasicCredentials = Depends(security)):
-    # correct_username = secrets.compare_digest(credentials.username, "admin")
-    # correct_password = secrets.compare_digest(credentials.password, "password")
-    correct_password = Hashing.verify_hash(credentials.password, "$2b$12$/MT6kUHKNAeRYXvN25hLSOHPgzmBcjKGxhomOp.l9QTSOkP8Ct7Vq")
-    correct_username = Hashing.verify_hash(credentials.username, "$2b$12$0H8AJc9OMpr58RXa9SYV5egTmmDEQiAtkUBhPNJhKNVyNeAn3HLki")
-    if not (correct_username and correct_password):
+class Error:
+
+    def unauthorized():
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Basic"},
         )
-    return credentials.username
 
 
-
+def login(credentials: HTTPBasicCredentials = Depends(security)):
+    data = Read.read_users_login(email = credentials.username)
+    if data is None:
+        Error.unauthorized()
+    correct_password = Hashing.verify_hash(credentials.password, data.password)
+    correct_username = Hashing.verify_user(credentials.username, data.email)
+    if not (correct_username and correct_password):
+        Error.unauthorized()
+    return data

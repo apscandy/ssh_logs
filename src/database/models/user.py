@@ -7,6 +7,12 @@ class CurrentUsers(SQLModel):
     password: str
     is_admin: bool
 
+class CreateUsers(SQLModel):
+    first_name: str
+    last_name: str
+    email :str
+    password: str
+
 class ListingDB(SQLModel):
     id: int
     email :str
@@ -15,7 +21,7 @@ class ListingDB(SQLModel):
 class UsersSchema(SQLModel):
     first_name: str
     last_name: str
-    email :str
+    email :str  = Field(index=True)
     password: str
     is_admin: Optional[bool] = False
 

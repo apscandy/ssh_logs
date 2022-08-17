@@ -1,91 +1,65 @@
-import typer
+from rich import print
+from rich.panel import Panel
 from rich.console import Console
-from rich.table import Table
+from rich.theme import Theme
+from typing import Tuple
+import typer
 from main import run_server
-from views.auth import Hashing
-from database.operations import Read, Create, Delete
+from database.operations import Delete, Read, Create, SetupDatabase
+from database.models.logs import *
 from database.models.user import *
-import json
-from enum import Enum
+from views.auth import Hashing
 
-
-class NeuralNetwork(Enum):
-    simple = "simple"
-    conv = "conv"
-    lstm = "lstm"
-
-
-
-
-
-console = Console()
+console_theme = Theme(
+    {"success": "green",
+    "info": "blue",
+    "warring":"underline yellow",
+    "error": "bold underline red"}
+)
+console = Console(theme=console_theme)
 app = typer.Typer(add_completion=False)
+
 database = typer.Typer()
-security = typer.Typer()
 api = typer.Typer()
+
 app.add_typer(database, name="db")
-app.add_typer(security, name="sec")
 app.add_typer(api, name="api")
 
+@database.command()
+def test(user: Tuple[str, str, str, str] = typer.Option((None, None, None, None))):
+    data = UsersSchema(
+        first_name=user[0],
+        last_name=user[1],
+        email=user[2],
+        password=user[3]
+    )
+    data.password = Hashing.create_hash(data.password)
+    print(data)
 
-def iterate_user():
-    data  = Read.read_users()
-    for user in data:
-        user = UsersSchemaRead(**user.dict())
-        yield user.dict()
 
 @database.command()
-def load_users():
-    total = 0
-    test = []
-    with typer.progressbar(iterate_user(), length=10) as progress:
-        for value in progress:
-            test.append(ListingDB(**value).dict())
-    console.print(f"Processed {total} user IDs.")
-    typer.confirm("Would you print the users", abort=True)
-    console.print(test)
+def setup(create: bool = typer.Option(..., prompt="Would you like to run the setup script", confirmation_prompt=True)):
+    if create:
+        SetupDatabase.create_db_and_tables()
 
 @database.command()
-def make_user(
-    first_name:str = typer.Option(..., prompt=True),
-    last_name:str = typer.Option(..., prompt=True),
-    password: str = typer.Option(..., prompt=True, confirmation_prompt=True, hide_input=True),
-    email: str = typer.Option(..., prompt=True, confirmation_prompt=True)
-    ):
-    password = Hashing.create_hash(password)
-    user = UsersSchema(first_name=first_name, last_name=last_name, password=password, email=email)
-    Create.create_user(user)
-    console.print(json.dumps(user.dict(), indent=2))
+def clear_users():
+    delete = typer.confirm("Are you sure you want to delete it?", abort=True)
+    if delete:
+        Delete.delete_all_users()
 
 @database.command()
-def get_users():
-    data  = Read.read_users()
-    for user in data:
-        user = CurrentUsers(**user.dict())
-        console.print(json.dumps((user.dict()), indent=2))
-
-@security.command()
-def get_password(password: str = typer.Option(..., prompt=True, confirmation_prompt=True, hide_input=True)):
-    password = Hashing.create_hash(password)
-    console.print(password)
-
-@security.command()
-def make_config():
-    user_list = []
-    for value in iterate_user():
-        user_list.append(ListingDB(**value).dict())
-    console.print(user_list)
-
-@security.command()
-def table():
-    table = Table('ID', 'Email/user', style="#00FF00")
-    for value in iterate_user():
-        user = ListingDB(**value)
-        table.add_row(str(user.id), user.email)
-    console.print(table)
-    select: int = typer.prompt("please enter and ID to delete")
-    Delete.delete_user(select)
-
+def add_user(
+    first_name: str = typer.Option(..., prompt="Please enter your first name"),
+    last_name: str = typer.Option(..., prompt="Please enter your last name"),
+    email :str = typer.Option(..., prompt="Please enter your email address"),
+    password: str = typer.Option(..., prompt="Please enter your password", confirmation_prompt=True, hide_input=True)
+):
+    password = Hashing.create_hash(password=password)
+    user = UsersSchema(first_name=first_name.capitalize(), last_name=last_name.capitalize(), email=email.lower(), password=password)
+    if typer.confirm("Are these the right details?", abort=True):
+        Create.create_user(user)
+        print(Panel(f"{user.first_name} {user.last_name}\n{user.email}", title="User created"))
 
 @api.command()
 def quick(
